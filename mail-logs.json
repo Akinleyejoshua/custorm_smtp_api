@@ -1,0 +1,26 @@
+[
+  {
+    "id": "snd_i1l4fu3xe",
+    "type": "sent",
+    "timestamp": "2026-06-17T01:43:56.159Z",
+    "from": "akinleyejoshua.dev@gmail.com",
+    "to": "joshua_ak@yopmail.com",
+    "subject": "DEMO",
+    "body": "ok",
+    "status": "failed",
+    "log": "SMTP Delivery error on host smtp.yopmail.com: Connection timeout (likely outbound port 25 blocked by ISP). Connection Logs:\n",
+    "mx": ""
+  },
+  {
+    "id": "snd_ohqa11nab",
+    "type": "sent",
+    "timestamp": "2026-06-17T01:43:48.106Z",
+    "from": "akinleyejoshua.dev@gmail.com",
+    "to": "joshua_ak@yopmail.com",
+    "subject": "DEMO",
+    "body": "ok",
+    "status": "success",
+    "log": "Simulation mode active: Message accepted for delivery to joshua_ak@yopmail.com (Simulated).",
+    "mx": "smtp.simulated.local"
+  }
+]

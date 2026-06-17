@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AetherSMTP - Custom SMTP Protocol & Bulk API</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- Lucide Icons (loaded via CDN) -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo">
+          <i data-lucide="send" class="logo-icon"></i>
+        </div>
+        <div class="brand-text">
+          <h1>AetherSMTP</h1>
+          <span>Custom Mail Engine</span>
+        </div>
+      </div>
+      
+      <nav class="nav-links">
+        <button class="nav-item active" data-tab="status">
+          <i data-lucide="activity"></i>
+          <span>Dashboard</span>
+        </button>
+        <button class="nav-item" data-tab="compose">
+          <i data-lucide="mail-plus"></i>
+          <span>Compose & Send</span>
+        </button>
+        <button class="nav-item" data-tab="logs">
+          <i data-lucide="archive"></i>
+          <span>Mail Logs</span>
+        </button>
+        <button class="nav-item" data-tab="docs">
+          <i data-lucide="book-open"></i>
+          <span>API Docs</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="status-indicator-group">
+          <div class="status-item">
+            <span class="status-dot online" id="smtp-dot"></span>
+            <span>SMTP Server</span>
+          </div>
+          <div class="status-item">
+            <span class="status-dot online" id="api-dot"></span>
+            <span>REST API</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Top header bar -->
+      <header class="top-header">
+        <h2 id="page-title">Dashboard</h2>
+        <div class="header-actions">
+          <button id="clear-logs-btn" class="btn btn-secondary">
+            <i data-lucide="trash-2"></i> Clear Logs
+          </button>
+          <button id="refresh-btn" class="btn btn-primary">
+            <i data-lucide="refresh-cw"></i> Refresh Status
+          </button>
+        </div>
+      </header>
+
+      <!-- TAB 1: STATUS / DASHBOARD -->
+      <section id="tab-status" class="tab-pane active">
+        <!-- Stat Cards Grid -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-label">Total Sent</span>
+              <div class="stat-icon-wrapper sent">
+                <i data-lucide="send"></i>
+              </div>
+            </div>
+            <div class="stat-value" id="stat-sent">0</div>
+            <div class="stat-desc">Emails delivered via API</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-label">Total Received</span>
+              <div class="stat-icon-wrapper received">
+                <i data-lucide="download"></i>
+              </div>
+            </div>
+            <div class="stat-value" id="stat-received">0</div>
+            <div class="stat-desc">Received via SMTP Server</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-label">Failed Deliveries</span>
+              <div class="stat-icon-wrapper failed">
+                <i data-lucide="alert-triangle"></i>
+              </div>
+            </div>
+            <div class="stat-value" id="stat-failed">0</div>
+            <div class="stat-desc">MX lookup/SMTP failures</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header">
+              <span class="stat-label">System Uptime</span>
+              <div class="stat-icon-wrapper uptime">
+                <i data-lucide="clock"></i>
+              </div>
+            </div>
+            <div class="stat-value" id="stat-uptime">0m</div>
+            <div class="stat-desc">Engine running duration</div>
+          </div>
+        </div>
+
+        <!-- Details & Activity Grid -->
+        <div class="dashboard-details-grid">
+          <div class="card detail-card">
+            <h3>Server Details</h3>
+            <div class="detail-list">
+              <div class="detail-row">
+                <span class="label">SMTP Port</span>
+                <span class="value code" id="val-smtp-port">2525</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">SMTP Host</span>
+                <span class="value code" id="val-smtp-host">127.0.0.1</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">SMTP Domain</span>
+                <span class="value code" id="val-smtp-domain">smtp.local</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">REST API Endpoint</span>
+                <span class="value code" id="val-api-endpoint">http://localhost:3000</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card activity-card">
+            <h3>Recent Activity</h3>
+            <div class="activity-timeline" id="recent-activity-list">
+              <!-- Dynamically populated -->
+              <div class="empty-state">No recent mail transactions.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: COMPOSE -->
+      <section id="tab-compose" class="tab-pane">
+        <div class="compose-container">
+          <div class="card compose-form-card">
+            <h3>SMTP Test Mailer</h3>
+            <form id="compose-form">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="compose-from">From Address (Sender)</label>
+                  <input type="email" id="compose-from" placeholder="noreply@smtp.local" required>
+                </div>
+                <div class="form-group">
+                  <label for="mode-toggle">Delivery Mode</label>
+                  <div class="toggle-container">
+                    <span class="toggle-label text-dim">Simulate</span>
+                    <label class="switch">
+                      <input type="checkbox" id="mode-toggle">
+                      <span class="slider"></span>
+                    </label>
+                    <span class="toggle-label">Direct MX (Real SMTP)</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="compose-to">Recipients (To) <span class="label-hint">Support list (e.g. user1@test.com, user2@test.com)</span></label>
+                <textarea id="compose-to" rows="2" placeholder="recipient1@domain.com, recipient2@domain.com" required></textarea>
+              </div>
+
+              <div class="form-group">
+                <label for="compose-subject">Subject</label>
+                <input type="text" id="compose-subject" placeholder="Welcome to AetherSMTP!" required>
+              </div>
+
+              <div class="form-group">
+                <label for="compose-html">HTML Content</label>
+                <textarea id="compose-html" rows="10" placeholder="<h1>Hello World!</h1><p>Sent from my custom SMTP engine.</p>" required></textarea>
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-large" id="send-mail-btn">
+                <i data-lucide="send"></i> Dispatch Emails
+              </button>
+            </form>
+          </div>
+
+          <div class="card compose-preview-card">
+            <h3>HTML Live Preview</h3>
+            <div class="preview-iframe-wrapper">
+              <iframe id="html-preview" srcdoc="<p style='color:#718096;text-align:center;padding-top:100px;'>Enter HTML in the editor to see preview</p>"></iframe>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: LOGS EXPLORER -->
+      <section id="tab-logs" class="tab-pane">
+        <div class="logs-explorer-container">
+          <div class="card logs-sidebar">
+            <div class="logs-filter-bar">
+              <input type="text" id="logs-search" placeholder="Filter emails...">
+              <select id="logs-type-filter">
+                <option value="all">All Logs</option>
+                <option value="sent">Sent (Outbox)</option>
+                <option value="received">Received (Inbox)</option>
+              </select>
+            </div>
+            <div class="logs-list" id="logs-list-container">
+              <!-- Dynamically populated -->
+              <div class="empty-state">No logs recorded.</div>
+            </div>
+          </div>
+
+          <div class="card log-viewer" id="log-detail-viewer">
+            <div class="empty-state">
+              <i data-lucide="mail" style="width: 48px; height: 48px; opacity: 0.5; margin-bottom: 1rem;"></i>
+              <p>Select an email from the list to view its details, headers, SMTP transaction, and rendered body.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: API & SMTP DOCS -->
+      <section id="tab-docs" class="tab-pane">
+        <div class="docs-container">
+          <div class="card docs-card">
+            <h2>API Documentation</h2>
+            <p class="docs-intro">
+              AetherSMTP runs a local Node.js engine providing both an SMTP port for legacy integration (e.g. Laravel, XAMPP, PHP `mail()`) and a robust REST API for modern microservices.
+            </p>
+
+            <h3 class="docs-heading">1. SMTP server integration</h3>
+            <p>Configure your application or framework to route mail through this custom server:</p>
+            <div class="code-block-wrapper">
+              <pre><code class="language-json">{
+  "SMTP_HOST": "127.0.0.1",
+  "SMTP_PORT": 2525,
+  "SMTP_SECURE": false,
+  "SMTP_USER": "",
+  "SMTP_PASS": ""
+}</code></pre>
+            </div>
+
+            <h3 class="docs-heading">2. REST API: Send Bulk Emails</h3>
+            <div class="endpoint-badge post">POST</div> <code class="endpoint-url">/api/send</code>
+            <p>Use this endpoint to trigger email sends (supports bulk queues).</p>
+
+            <h4>Request Headers</h4>
+            <div class="code-block-wrapper">
+              <pre><code class="language-http">Content-Type: application/json</code></pre>
+            </div>
+
+            <h4>Request Body Payload</h4>
+            <div class="code-block-wrapper">
+              <pre><code class="language-json">{
+  "to": "user1@example.com, user2@example.com", // String or Array
+  "from": "app-notifications@mydomain.com",
+  "subject": "System Warning: Storage full",
+  "html": "&lt;h1&gt;Storage Capacity Alert&lt;/h1&gt;&lt;p&gt;Please free up disk space...&lt;/p&gt;",
+  "simulate": true // set to false for real MX delivery (DNS resolution)
+}</code></pre>
+            </div>
+
+            <h4>Response Format (Success 200 OK)</h4>
+            <div class="code-block-wrapper">
+              <pre><code class="language-json">{
+  "success": true,
+  "summary": {
+    "total": 2,
+    "success": 2,
+    "failed": 0
+  },
+  "results": [
+    {
+      "id": "snd_34f89d",
+      "type": "sent",
+      "timestamp": "2026-06-17T01:30:00.000Z",
+      "from": "app-notifications@mydomain.com",
+      "to": "user1@example.com",
+      "subject": "System Warning: Storage full",
+      "status": "success",
+      "log": "Simulation mode active...",
+      "mx": "smtp.simulated.local"
+    }
+  ]
+}</code></pre>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Main JavaScript -->
+  <script src="app.js"></script>
+</body>
+</html>
