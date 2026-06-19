@@ -164,8 +164,8 @@ export function startApiServer({ port, smtpPort, smtpHost, smtpDomain }) {
     });
   });
 
-  const server = app.listen(port, () => {
-    console.log(`API Server running on http://localhost:${port}`);
+  const server = app.listen(port, '0.0.0.0', () => {
+    console.log(`API Server running on http://0.0.0.0:${port}`);
   });
 
   return { app, server };

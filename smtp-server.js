@@ -147,8 +147,8 @@ export function startSmtpServer({ port, host, onMessageReceived }) {
     });
   });
 
-  server.listen(port, host, () => {
-    console.log(`SMTP Server running on smtp://${host}:${port}`);
+  server.listen(port, host || '0.0.0.0', () => {
+    console.log(`SMTP Server running on smtp://${host || '0.0.0.0'}:${port}`);
   });
 
   return server;
